@@ -1,9 +1,5 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { LucidLogo } from "@/components/lucid-logo"
-import { StatusBar } from "@/components/status-bar"
-import { Navigation } from "@/components/navigation"
-import { CustomCursor } from "@/components/custom-cursor"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -21,10 +17,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="gpu-accelerated bg-black text-white overflow-x-hidden custom-cursor">
-        <CustomCursor />
-        <StatusBar />
-        <Navigation />
-        <LucidLogo />
         {children}
       </body>
     </html>
