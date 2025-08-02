@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { projectService, Project } from "@/lib/firebase-service"
 import { StatusBar } from "@/components/status-bar"
 import { Navigation } from "@/components/navigation"
 import { CustomCursor } from "@/components/custom-cursor"
@@ -14,9 +15,12 @@ import { ProjectCard } from "@/components/project-card"
 
 export default function Home() {
   const [selectedService, setSelectedService] = useState<string | null>(null)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
   const contactSectionRef = useRef<HTMLDivElement>(null)
 
-  const serviceProjects = {
+  // Default projects as fallback
+  const defaultServiceProjects = {
     CGI: [
       {
         title: "Hyperreal Product Visualization",
@@ -24,6 +28,8 @@ export default function Home() {
         capabilities: ["Product Rendering", "Architectural Visualization", "Character Animation", "VFX"],
         image: "◊",
         color: "from-orange-500/20 to-red-500/20",
+        year: "2023",
+        client: "Fashion Brand"
       },
       {
         title: "Virtual Showroom Experience",
@@ -31,6 +37,8 @@ export default function Home() {
         capabilities: ["Environment Design", "Real-time Rendering", "Interactive 3D", "Virtual Tours"],
         image: "⬢",
         color: "from-orange-500/20 to-yellow-500/20",
+        year: "2023",
+        client: "Automotive"
       },
       {
         title: "Cinematic Brand Campaign",
@@ -38,6 +46,8 @@ export default function Home() {
         capabilities: ["Motion Graphics", "Compositing", "Lighting Design", "Post-Production"],
         image: "◈",
         color: "from-orange-500/20 to-pink-500/20",
+        year: "2023",
+        client: "Global Brand"
       },
     ],
     AI: [
@@ -47,6 +57,8 @@ export default function Home() {
         capabilities: ["Machine Learning", "Computer Vision", "Natural Language Processing", "Automation"],
         image: "△",
         color: "from-blue-500/20 to-purple-500/20",
+        year: "2023",
+        client: "Tech Company"
       },
       {
         title: "Smart Content Generator",
@@ -54,6 +66,8 @@ export default function Home() {
         capabilities: ["Content Generation", "Image Recognition", "Predictive Analytics", "Data Processing"],
         image: "▲",
         color: "from-purple-500/20 to-pink-500/20",
+        year: "2023",
+        client: "Media Company"
       },
       {
         title: "Personalization Engine",
@@ -61,6 +75,8 @@ export default function Home() {
         capabilities: ["Recommendation Systems", "User Behavior Analysis", "A/B Testing", "Performance Optimization"],
         image: "⟐",
         color: "from-cyan-500/20 to-blue-500/20",
+        year: "2023",
+        client: "E-commerce"
       },
     ],
     MOBILE: [
@@ -70,6 +86,8 @@ export default function Home() {
         capabilities: ["iOS Development", "Android Development", "AR/VR Integration", "Social Features"],
         image: "◯",
         color: "from-green-500/20 to-teal-500/20",
+        year: "2023",
+        client: "Social Media"
       },
       {
         title: "E-commerce Mobile App",
@@ -77,6 +95,8 @@ export default function Home() {
         capabilities: ["Cross-Platform Development", "Payment Integration", "Push Notifications", "Analytics"],
         image: "○",
         color: "from-teal-500/20 to-cyan-500/20",
+        year: "2023",
+        client: "Retail"
       },
       {
         title: "Fitness Tracking App",
@@ -84,6 +104,8 @@ export default function Home() {
         capabilities: ["Health Tracking", "AI Coaching", "Wearable Integration", "Data Visualization"],
         image: "◐",
         color: "from-green-500/20 to-lime-500/20",
+        year: "2023",
+        client: "Health Tech"
       },
     ],
     WEB: [
@@ -93,6 +115,8 @@ export default function Home() {
         capabilities: ["React/Next.js", "3D Web Graphics", "Performance Optimization", "SEO"],
         image: "◢",
         color: "from-purple-500/20 to-pink-500/20",
+        year: "2023",
+        client: "Creative Agency"
       },
       {
         title: "E-commerce Platform",
@@ -100,6 +124,8 @@ export default function Home() {
         capabilities: ["E-commerce Development", "Payment Systems", "Inventory Management", "Analytics"],
         image: "◣",
         color: "from-indigo-500/20 to-purple-500/20",
+        year: "2023",
+        client: "Online Store"
       },
       {
         title: "Corporate Website",
@@ -107,8 +133,37 @@ export default function Home() {
         capabilities: ["Content Management", "Multi-language Support", "Accessibility", "Mobile Responsive"],
         image: "◤",
         color: "from-blue-500/20 to-indigo-500/20",
+        year: "2023",
+        client: "Corporation"
       },
     ],
+  }
+
+  // Load projects from Firebase
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        const firebaseProjects = await projectService.getAll()
+        setProjects(firebaseProjects)
+      } catch (error) {
+        console.error('Failed to load projects:', error)
+        setProjects([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadProjects()
+  }, [])
+
+  // Get projects by category, with fallback to default projects
+  const getProjectsByCategory = (category: string) => {
+    const firebaseProjects = projects.filter(p => p.category === category)
+    if (firebaseProjects.length > 0) {
+      return firebaseProjects
+    }
+    // Fallback to default projects
+    return defaultServiceProjects[category as keyof typeof defaultServiceProjects] || []
   }
 
   // Scroll to contact section
@@ -156,22 +211,24 @@ export default function Home() {
 
           {/* Interactive Services Section */}
           <section className="relative z-10 py-12 sm:py-16 md:py-20 bg-black">
-            <div className="opacity-0 animate-fade-in-up animate-delay-300">
-              <div className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 lg:gap-12 text-sm sm:text-base md:text-lg lg:text-xl font-mono text-gray-300">
-                {["CGI", "AI", "MOBILE", "WEB"].map((service) => (
-                  <button
-                    key={service}
-                    onClick={() => setSelectedService(selectedService === service ? null : service)}
-                    className={`hover:text-orange-500 transition-all duration-300 cursor-pointer hover-scale relative min-h-[44px] px-2 py-2 ${
-                      selectedService === service ? "text-orange-500 scale-110" : ""
-                    }`}
-                  >
-                    {service}
-                    {selectedService === service && (
-                      <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-orange-500 animate-fade-in-up"></div>
-                    )}
-                  </button>
-                ))}
+            <div className="responsive-container">
+              <div className="opacity-0 animate-fade-in-up animate-delay-300">
+                <div className="responsive-flex text-sm sm:text-base md:text-lg lg:text-xl font-mono text-gray-300">
+                  {["CGI", "AI", "MOBILE", "WEB"].map((service) => (
+                    <button
+                      key={service}
+                      onClick={() => setSelectedService(selectedService === service ? null : service)}
+                      className={`hover:text-orange-500 transition-all duration-300 cursor-pointer hover-scale relative min-h-[44px] min-w-[44px] px-4 py-2 rounded-lg ${
+                        selectedService === service ? "text-orange-500 scale-110 bg-orange-500/10" : ""
+                      }`}
+                    >
+                      {service}
+                      {selectedService === service && (
+                        <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-orange-500 animate-fade-in-up"></div>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </section>
@@ -179,34 +236,36 @@ export default function Home() {
           {/* Service Projects Display */}
           {selectedService && (
             <section className="relative z-10 py-12 sm:py-16 md:py-20 bg-black">
-              <div className="opacity-0 animate-fade-in-up animate-delay-300">
-                <div className="bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 max-w-6xl mx-auto backdrop-blur-sm">
-                  <h3 className="text-section-title text-white mb-6 sm:mb-8">
-                    {selectedService} <span className="text-orange-500">PROJECTS</span>
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-                    {serviceProjects[selectedService as keyof typeof serviceProjects]?.map((project, index) => (
-                      <ProjectCard
-                        key={index}
-                        id={index}
-                        title={project.title}
-                        description={project.description}
-                        category={selectedService}
-                        image={project.image}
-                        color={project.color}
-                        year="2023"
-                        client={project.description.split(" ")[project.description.split(" ").length - 1]}
+              <div className="responsive-container">
+                <div className="opacity-0 animate-fade-in-up animate-delay-300">
+                  <div className="bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 backdrop-blur-sm">
+                    <h3 className="text-section-title text-white mb-6 sm:mb-8 text-center">
+                      {selectedService} <span className="text-orange-500">PROJECTS</span>
+                    </h3>
+                    <div className="responsive-grid">
+                      {getProjectsByCategory(selectedService).map((project, index) => (
+                        <ProjectCard
+                          key={project.id || index}
+                          id={index}
+                          title={project.title}
+                          description={project.description}
+                          category={selectedService}
+                          image={project.image}
+                          color={project.color}
+                          year={project.year}
+                          client={project.client}
+                          href={project.href || "/work"}
+                        />
+                      ))}
+                    </div>
+                    <div className="mt-6 sm:mt-8 text-center">
+                      <Link
                         href="/work"
-                      />
-                    ))}
-                  </div>
-                  <div className="mt-6 sm:mt-8 text-center">
-                    <Link
-                      href="/work"
-                      className="btn-outline px-4 sm:px-6 md:px-8 py-3 sm:py-4 inline-block hover-glow"
-                    >
-                      VIEW ALL {selectedService} PROJECTS
-                    </Link>
+                        className="btn-outline px-4 sm:px-6 md:px-8 py-3 sm:py-4 inline-block hover-glow"
+                      >
+                        VIEW ALL {selectedService} PROJECTS
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -257,8 +316,8 @@ export default function Home() {
           </section>
 
           {/* Services Grid */}
-          <section className="relative z-10 section-padding px-3 sm:px-4 md:px-6 bg-black">
-            <div className="container mx-auto max-w-7xl">
+          <section className="relative z-10 section-padding bg-black">
+            <div className="responsive-container">
               <div className="text-center mb-12 sm:mb-16 md:mb-20 opacity-0 animate-fade-in-up animate-delay-300">
                 <h2 className="text-section-title text-white mb-6 sm:mb-8">
                   OUR <span className="text-orange-500">EXPERTISE</span>
@@ -268,7 +327,7 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+              <div className="responsive-grid">
                 {[
                   { title: "CGI", subtitle: "VISUALIZATION", icon: "◊", delay: "400", href: "/services#cgi" },
                   { title: "AI", subtitle: "DEVELOPMENT", icon: "△", delay: "600", href: "/services#ai" },
@@ -277,7 +336,7 @@ export default function Home() {
                 ].map((service, index) => (
                   <div key={index} className={`opacity-0 animate-fade-in-up animate-delay-${service.delay}`}>
                     <Link href={service.href}>
-                      <div className="service-card group relative p-6 sm:p-8 rounded-xl sm:rounded-2xl hover-lift hover-glow transition-all duration-300 cursor-pointer h-full">
+                      <div className="service-card group relative p-6 sm:p-8 rounded-xl sm:rounded-2xl hover-lift hover-glow transition-all duration-300 cursor-pointer h-full min-h-[200px] flex flex-col justify-center items-center text-center">
                         <div className="text-3xl sm:text-4xl md:text-5xl text-orange-500 mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
                           {service.icon}
                         </div>
@@ -313,7 +372,7 @@ export default function Home() {
                 <ContactButton />
               </div>
 
-              <div id="contact-details" className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 md:gap-16 hidden">
+              <div id="contact-details" className="hidden lg:grid lg:grid-cols-2 gap-8 sm:gap-12 md:gap-16">
                 {/* Contact Form */}
                 <div className="service-card p-6 sm:p-8 rounded-2xl sm:rounded-3xl">
                   <h3 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">Get in Touch</h3>

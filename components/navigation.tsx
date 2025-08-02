@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Phone, Search, Menu, X } from "lucide-react"
+import { Phone, Search, Menu, X, Settings } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
 
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
+  const { isAdmin, user } = useAuth()
 
   const navItems = [
     { label: "HOME", href: "/" },
@@ -16,6 +18,7 @@ export function Navigation() {
     { label: "SERVICES", href: "/services" },
     { label: "CONTACT", href: "/contact" },
     { label: "SHOWROOM", href: "/showroom" },
+    ...(user ? [{ label: "DASHBOARD", href: isAdmin ? "/admin" : "/dashboard" }] : [{ label: "LOGIN", href: "/auth" }]),
   ]
 
   useEffect(() => {
@@ -43,6 +46,13 @@ export function Navigation() {
         <button className="p-2 sm:p-3 text-white hover:text-orange-500 transition-colors hover-scale min-w-[44px] min-h-[44px] flex items-center justify-center">
           <Search className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
+        {isAdmin && (
+          <Link href="/admin">
+            <button className="p-2 sm:p-3 text-white hover:text-orange-500 transition-colors hover-scale min-w-[44px] min-h-[44px] flex items-center justify-center">
+              <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
+          </Link>
+        )}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="btn-outline px-3 py-2 sm:px-4 sm:py-2 md:px-6 md:py-3 flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm"

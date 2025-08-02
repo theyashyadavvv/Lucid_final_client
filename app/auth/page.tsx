@@ -1,92 +1,193 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft, Mail, Lock, User, Eye, EyeOff } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Shield, Users, Briefcase } from "lucide-react"
 import Link from "next/link"
 
 export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState("")
+  const [userType, setUserType] = useState("client")
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    fullName: "",
+    company: "",
+    role: ""
+  })
+
+  const { signIn, signUp, user } = useAuth()
+  const router = useRouter()
+
+  // Redirect if already logged in
+  if (user) {
+    router.push("/dashboard")
+    return null
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
 
   const handleSubmit = async (e: React.FormEvent, type: string) => {
     e.preventDefault()
     setIsLoading(true)
     setMessage("")
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
       if (type === "signin") {
-        window.location.href = "/dashboard"
+        await signIn(formData.email, formData.password)
+        // Redirect based on user type
+        if (formData.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
+          router.push("/admin")
+        } else {
+          router.push("/dashboard")
+        }
       } else if (type === "signup") {
+        await signUp(formData.email, formData.password)
         setMessage("Account created successfully! Please check your email to verify your account.")
-      } else {
-        setMessage("Password reset link sent to your email address.")
       }
-    }, 1500)
+    } catch (error: any) {
+      setMessage(error.message || "An error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
+          <Link href="/" className="inline-flex items-center text-sm text-gray-400 hover:text-white mb-4">
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back to Home
           </Link>
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg"></div>
-            <span className="text-2xl font-bold text-gray-900">SmartHub</span>
+            <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg"></div>
+            <span className="text-2xl font-bold text-white">Lucid Studio</span>
           </div>
-          <p className="text-gray-600">Welcome back! Please sign in to your account.</p>
+          <p className="text-gray-400">Access your project dashboard and manage your creative work.</p>
+        </div>
+
+        {/* User Type Selection */}
+        <div className="mb-6">
+          <Label className="text-white mb-3 block">I am a:</Label>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setUserType("client")}
+              className={`p-3 rounded-lg border transition-all ${
+                userType === "client"
+                  ? "border-orange-500 bg-orange-500/20 text-orange-500"
+                  : "border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600"
+              }`}
+            >
+              <Users className="w-5 h-5 mx-auto mb-1" />
+              <span className="text-xs">Client</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setUserType("freelancer")}
+              className={`p-3 rounded-lg border transition-all ${
+                userType === "freelancer"
+                  ? "border-orange-500 bg-orange-500/20 text-orange-500"
+                  : "border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600"
+              }`}
+            >
+              <User className="w-5 h-5 mx-auto mb-1" />
+              <span className="text-xs">Freelancer</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setUserType("admin")}
+              className={`p-3 rounded-lg border transition-all ${
+                userType === "admin"
+                  ? "border-orange-500 bg-orange-500/20 text-orange-500"
+                  : "border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600"
+              }`}
+            >
+              <Shield className="w-5 h-5 mx-auto mb-1" />
+              <span className="text-xs">Admin</span>
+            </button>
+          </div>
         </div>
 
         <Tabs defaultValue="signin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 bg-gray-900 border border-orange-500/20">
+            <TabsTrigger
+              value="signin"
+              className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+            >
+              Sign In
+            </TabsTrigger>
+            <TabsTrigger
+              value="signup"
+              className="data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+            >
+              Sign Up
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="signin">
-            <Card>
+            <Card className="bg-gray-900 border-orange-500/20">
               <CardHeader>
-                <CardTitle>Sign In</CardTitle>
-                <CardDescription>Enter your email and password to access your account.</CardDescription>
+                <CardTitle className="text-white">
+                  Sign In as {userType === "admin" ? "Admin" : userType === "freelancer" ? "Freelancer" : "Client"}
+                </CardTitle>
+                <CardDescription className="text-gray-400">
+                  {userType === "admin"
+                    ? "Access admin dashboard to manage content"
+                    : userType === "freelancer"
+                    ? "Access your freelancer workspace"
+                    : "Access your project dashboard and collaborate with our team"
+                  }
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={(e) => handleSubmit(e, "signin")} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email" className="text-white">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input id="email" type="email" placeholder="Enter your email" className="pl-10" required />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder={userType === "admin" ? "admin@lucidstudio.com" : "Enter your email"}
+                        className="pl-10 bg-gray-800 border-gray-700 text-white"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        required
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password" className="text-white">Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="Enter your password"
-                        className="pl-10 pr-10"
+                        className="pl-10 pr-10 bg-gray-800 border-gray-700 text-white"
+                        value={formData.password}
+                        onChange={(e) => handleInputChange("password", e.target.value)}
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-3 text-gray-400 hover:text-white"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -95,23 +196,23 @@ export default function AuthPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <input type="checkbox" id="remember" className="rounded" />
-                      <Label htmlFor="remember" className="text-sm">
+                      <Label htmlFor="remember" className="text-sm text-gray-400">
                         Remember me
                       </Label>
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        handleSubmit(e as any, "reset")
-                      }}
-                      className="text-sm text-blue-600 hover:underline"
+                      className="text-sm text-orange-500 hover:text-orange-400"
                     >
                       Forgot password?
                     </button>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Signing in..." : "Sign In"}
+                  <Button
+                    type="submit"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Signing in..." : `Sign In as ${userType === "admin" ? "Admin" : userType === "freelancer" ? "Freelancer" : "Client"}`}
                   </Button>
                 </form>
               </CardContent>
@@ -119,62 +220,116 @@ export default function AuthPage() {
           </TabsContent>
 
           <TabsContent value="signup">
-            <Card>
+            <Card className="bg-gray-900 border-orange-500/20">
               <CardHeader>
-                <CardTitle>Create Account</CardTitle>
-                <CardDescription>Sign up for a new SmartHub account to get started.</CardDescription>
+                <CardTitle className="text-white">
+                  Create {userType === "admin" ? "Admin" : userType === "freelancer" ? "Freelancer" : "Client"} Account
+                </CardTitle>
+                <CardDescription className="text-gray-400">
+                  {userType === "admin"
+                    ? "Create admin account to manage the platform"
+                    : userType === "freelancer"
+                    ? "Join our creative team as a freelancer"
+                    : "Start your creative journey with Lucid Studio"
+                  }
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={(e) => handleSubmit(e, "signup")} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="fullname">Full Name</Label>
+                    <Label htmlFor="fullname" className="text-white">Full Name</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input id="fullname" type="text" placeholder="Enter your full name" className="pl-10" required />
+                      <Input
+                        id="fullname"
+                        type="text"
+                        placeholder="Enter your full name"
+                        className="pl-10 bg-gray-800 border-gray-700 text-white"
+                        value={formData.fullName}
+                        onChange={(e) => handleInputChange("fullName", e.target.value)}
+                        required
+                      />
                     </div>
                   </div>
+
+                  {userType !== "admin" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="company" className="text-white">
+                        {userType === "freelancer" ? "Specialization" : "Company/Organization"}
+                      </Label>
+                      <div className="relative">
+                        <Briefcase className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="company"
+                          type="text"
+                          placeholder={userType === "freelancer" ? "e.g., 3D Artist, UI/UX Designer" : "Enter your company name"}
+                          className="pl-10 bg-gray-800 border-gray-700 text-white"
+                          value={formData.company}
+                          onChange={(e) => handleInputChange("company", e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email" className="text-white">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input id="signup-email" type="email" placeholder="Enter your email" className="pl-10" required />
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="Enter your email"
+                        className="pl-10 bg-gray-800 border-gray-700 text-white"
+                        value={formData.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        required
+                      />
                     </div>
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password" className="text-white">Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="signup-password"
                         type={showPassword ? "text" : "password"}
                         placeholder="Create a password"
-                        className="pl-10 pr-10"
+                        className="pl-10 pr-10 bg-gray-800 border-gray-700 text-white"
+                        value={formData.password}
+                        onChange={(e) => handleInputChange("password", e.target.value)}
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-3 text-gray-400 hover:text-white"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                   </div>
+
                   <div className="flex items-center space-x-2">
                     <input type="checkbox" id="terms" className="rounded" required />
-                    <Label htmlFor="terms" className="text-sm">
+                    <Label htmlFor="terms" className="text-sm text-gray-400">
                       I agree to the{" "}
-                      <a href="#" className="text-blue-600 hover:underline">
+                      <a href="#" className="text-orange-500 hover:text-orange-400">
                         Terms of Service
                       </a>{" "}
                       and{" "}
-                      <a href="#" className="text-blue-600 hover:underline">
+                      <a href="#" className="text-orange-500 hover:text-orange-400">
                         Privacy Policy
                       </a>
                     </Label>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Creating account..." : "Create Account"}
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Creating account..." : `Create ${userType === "admin" ? "Admin" : userType === "freelancer" ? "Freelancer" : "Client"} Account`}
                   </Button>
                 </form>
               </CardContent>
@@ -183,49 +338,18 @@ export default function AuthPage() {
         </Tabs>
 
         {message && (
-          <Alert className="mt-4">
-            <AlertDescription>{message}</AlertDescription>
+          <Alert className="mt-4 border-orange-500/20 bg-orange-500/10">
+            <AlertDescription className="text-orange-300">{message}</AlertDescription>
           </Alert>
         )}
 
-        {/* Social Login Options */}
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">Or continue with</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <Button variant="outline" className="w-full">
-              <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              Google
-            </Button>
-            <Button variant="outline" className="w-full">
-              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-              </svg>
-              Facebook
-            </Button>
+        {/* Quick Access Info */}
+        <div className="mt-6 p-4 bg-gray-900 rounded-lg border border-orange-500/20">
+          <h3 className="text-white font-medium mb-2">Quick Access:</h3>
+          <div className="space-y-1 text-sm text-gray-400">
+            <p><span className="text-orange-500">Admin:</span> Full platform management</p>
+            <p><span className="text-orange-500">Freelancer:</span> Project collaboration workspace</p>
+            <p><span className="text-orange-500">Client:</span> Project dashboard and communication</p>
           </div>
         </div>
       </div>
