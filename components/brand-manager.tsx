@@ -10,6 +10,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Plus, Edit, Trash2, ExternalLink } from 'lucide-react'
+import { storage } from '@/lib/firebase'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { toast } from '@/hooks/use-toast'
 
 export function BrandManager() {
   const [brands, setBrands] = useState<Brand[]>([])
@@ -40,22 +43,33 @@ export function BrandManager() {
     }
   }
 
+  const handleImageUpload = async (file: File) => {
+    const storageRef = ref(storage, `brands/${Date.now()}_${file.name}`)
+    await uploadBytes(storageRef, file)
+    return await getDownloadURL(storageRef)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
     try {
-      if (editingBrand) {
-        await brandService.update(editingBrand.id!, formData)
-      } else {
-        await brandService.create(formData)
+      let logoUrl = formData.logo
+      if (formData.logo instanceof File) {
+        logoUrl = await handleImageUpload(formData.logo)
       }
-      
+      if (editingBrand) {
+        await brandService.update(editingBrand.id!, { ...formData, logo: logoUrl })
+        toast({ title: 'Brand updated successfully', description: formData.name })
+      } else {
+        await brandService.create({ ...formData, logo: logoUrl })
+        toast({ title: 'Brand created successfully', description: formData.name })
+      }
       await loadBrands()
       setIsDialogOpen(false)
       resetForm()
     } catch (error: any) {
       setError(error.message)
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
     }
   }
 
@@ -129,15 +143,21 @@ export function BrandManager() {
                 />
               </div>
               <div>
-                <Label htmlFor="logo">Logo URL</Label>
+                <Label htmlFor="logo">Logo</Label>
                 <Input
                   id="logo"
-                  value={formData.logo}
-                  onChange={(e) => setFormData({ ...formData, logo: e.target.value })}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setFormData({ ...formData, logo: e.target.files[0] })
+                    }
+                  }}
                   className="bg-gray-800 border-gray-700"
-                  placeholder="https://example.com/logo.png"
-                  required
                 />
+                {typeof formData.logo === 'string' && formData.logo && (
+                  <img src={formData.logo} alt="Logo preview" className="mt-2 w-16 h-16 object-contain rounded" />
+                )}
               </div>
               <div>
                 <Label htmlFor="description">Description</Label>

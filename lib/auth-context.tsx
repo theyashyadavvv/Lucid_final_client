@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@lucidstudio.com'
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || process.env.next_public_admin_email || 'admin@lucidstudio.com'
   const isAdmin = user?.email === adminEmail
 
   useEffect(() => {

@@ -47,19 +47,20 @@ export function Navbar() {
               <img
                 src="/images/lucid-logo.png"
                 alt="Lucid Studio"
-                className="h-8 w-auto transition-all duration-300 group-hover:scale-110"
+                className="h-8 w-8 sm:h-10 sm:w-10 object-contain transition-all duration-300 group-hover:scale-110 flex-shrink-0"
               />
+              <span className="ml-2 text-lg font-bold text-white hidden sm:inline">Lucid</span>
             </Link>
 
-            <div className="flex items-center space-x-6">
-              <button className="p-2 hover:text-orange-400 transition-colors">
+            <div className="flex items-center space-x-4 sm:space-x-6 flex-wrap">
+              <button className="p-2 sm:p-3 min-w-[44px] min-h-[44px] hover:text-orange-400 transition-colors flex-shrink-0">
                 <Phone className="w-5 h-5" />
               </button>
-              <button className="p-2 hover:text-orange-400 transition-colors">
+              <button className="p-2 sm:p-3 min-w-[44px] min-h-[44px] hover:text-orange-400 transition-colors flex-shrink-0">
                 <Search className="w-5 h-5" />
               </button>
               <MagneticButton>
-                <DuneButton variant="outline" size="sm" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                <DuneButton variant="outline" size="sm" onClick={() => setIsMenuOpen(!isMenuOpen)} className="min-w-[44px] min-h-[44px] flex-shrink-0">
                   {isMenuOpen ? "CLOSE" : "MENU"}
                 </DuneButton>
               </MagneticButton>

@@ -52,6 +52,33 @@ export default function Home() {
     ],
     AI: [
       {
+        title: "Casio AI Watch Renders",
+        description: "AI-powered image generation for Casio watches. 15 unique renders created for Casio’s digital campaign.",
+        capabilities: ["AI Image Generation", "Product Visualization", "Instagram Integration"],
+        image: "/images/casio-1.jpg", // main image for card
+        color: "from-blue-500/20 to-purple-500/20",
+        year: "2024",
+        client: "Casio",
+        gallery: [
+          {
+            src: "/images/casio-1.jpg",
+            description: "AI-generated Casio watch render #1",
+            instagram: "https://www.instagram.com/p/DMu9HRvThP6/?igsh=MTFucmlmZmt3NmQ1bw=="
+          },
+          {
+            src: "/images/casio-2.jpg",
+            description: "AI-generated Casio watch render #2",
+            instagram: "https://www.instagram.com/p/DLUeEyxzJ0s/?igsh=MW53b3N2bW1vNHh6bw=="
+          },
+          // Placeholders for the rest
+          ...Array.from({ length: 13 }).map((_, i) => ({
+            src: `/images/casio-placeholder-${i + 3}.jpg`,
+            description: `AI-generated Casio watch render #${i + 3}`,
+            instagram: "https://www.instagram.com/casio/" // generic link
+          }))
+        ]
+      },
+      {
         title: "Intelligent Design Assistant",
         description: "AI-powered design automation platform",
         capabilities: ["Machine Learning", "Computer Vision", "Natural Language Processing", "Automation"],
@@ -156,14 +183,17 @@ export default function Home() {
     loadProjects()
   }, [])
 
-  // Get projects by category, with fallback to default projects
+  // Get projects by category, always show both Firestore and default (no duplicates by title)
   const getProjectsByCategory = (category: string) => {
     const firebaseProjects = projects.filter(p => p.category === category)
-    if (firebaseProjects.length > 0) {
-      return firebaseProjects
-    }
-    // Fallback to default projects
-    return defaultServiceProjects[category as keyof typeof defaultServiceProjects] || []
+    const defaultProjects = defaultServiceProjects[category as keyof typeof defaultServiceProjects] || []
+    // Remove duplicates by title
+    const firebaseTitles = new Set(firebaseProjects.map(p => p.title))
+    const merged = [
+      ...firebaseProjects,
+      ...defaultProjects.filter((p: any) => !firebaseTitles.has(p.title))
+    ]
+    return merged
   }
 
   // Scroll to contact section
@@ -188,9 +218,9 @@ export default function Home() {
         <InteractiveElement />
 
         {/* Glowing Orbs */}
-        <div className="glow-orb-1"></div>
+        {/* <div className="glow-orb-1"></div>
         <div className="glow-orb-2"></div>
-        <div className="glow-orb-3"></div>
+        <div className="glow-orb-3"></div> */}
 
         <main className="min-h-screen flex flex-col">
           {/* Hero Section */}
@@ -243,20 +273,23 @@ export default function Home() {
                       {selectedService} <span className="text-orange-500">PROJECTS</span>
                     </h3>
                     <div className="responsive-grid">
-                      {getProjectsByCategory(selectedService).map((project, index) => (
-                        <ProjectCard
-                          key={project.id || index}
-                          id={index}
-                          title={project.title}
-                          description={project.description}
-                          category={selectedService}
-                          image={project.image}
-                          color={project.color}
-                          year={project.year}
-                          client={project.client}
-                          href={project.href || "/work"}
-                        />
-                      ))}
+                      {getProjectsByCategory(selectedService).map((project, index) => {
+                        const p = project as any;
+                        return (
+                          <ProjectCard
+                            key={p.id ?? index}
+                            id={p.id ?? index}
+                            title={p.title}
+                            description={p.description}
+                            category={selectedService}
+                            image={p.image}
+                            color={p.color}
+                            year={p.year}
+                            client={p.client}
+                            href={p.href ?? "/work"}
+                          />
+                        );
+                      })}
                     </div>
                     <div className="mt-6 sm:mt-8 text-center">
                       <Link

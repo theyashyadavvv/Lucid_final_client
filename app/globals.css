@@ -826,3 +826,34 @@
 .review-marquee-container:hover .review-marquee-track {
   animation-play-state: paused;
 }
+
+/* Focus-visible outline for accessibility */
+:focus-visible {
+  outline: 2px solid var(--orange, #FFB400);
+  outline-offset: 2px;
+}
+
+/* Slightly increase gap for responsive-grid and responsive-flex on larger screens */
+@media (min-width: 1024px) {
+  .responsive-grid {
+    gap: clamp(2rem, 4vw, 3rem);
+  }
+  .responsive-flex {
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+  }
+}
+
+/* Extra small screen optimizations */
+@media (max-width: 374px) {
+  .text-hero-large {
+    font-size: 2rem;
+  }
+  .btn-primary, .btn-outline {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+  }
+  .section-padding {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+}

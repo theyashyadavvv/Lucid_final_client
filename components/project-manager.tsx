@@ -13,6 +13,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, Edit, Trash2, Star, X } from 'lucide-react'
+import { storage } from '@/lib/firebase'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { toast } from '@/hooks/use-toast'
 
 export function ProjectManager() {
   const [projects, setProjects] = useState<Project[]>([])
@@ -50,22 +53,33 @@ export function ProjectManager() {
     }
   }
 
+  const handleImageUpload = async (file: File) => {
+    const storageRef = ref(storage, `projects/${Date.now()}_${file.name}`)
+    await uploadBytes(storageRef, file)
+    return await getDownloadURL(storageRef)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
     try {
-      if (editingProject) {
-        await projectService.update(editingProject.id!, formData)
-      } else {
-        await projectService.create(formData)
+      let imageUrl = formData.image
+      if (formData.image instanceof File) {
+        imageUrl = await handleImageUpload(formData.image)
       }
-      
+      if (editingProject) {
+        await projectService.update(editingProject.id!, { ...formData, image: imageUrl })
+        toast({ title: 'Project updated successfully', description: formData.title })
+      } else {
+        await projectService.create({ ...formData, image: imageUrl })
+        toast({ title: 'Project created successfully', description: formData.title })
+      }
       await loadProjects()
       setIsDialogOpen(false)
       resetForm()
     } catch (error: any) {
       setError(error.message)
+      toast({ title: 'Error', description: error.message, variant: 'destructive' })
     }
   }
 
@@ -238,12 +252,18 @@ export function ProjectManager() {
                 <Label htmlFor="image">Image/Icon</Label>
                 <Input
                   id="image"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setFormData({ ...formData, image: e.target.files[0] })
+                    }
+                  }}
                   className="bg-gray-800 border-gray-700"
-                  placeholder="URL or single character (◊, △, ◯, etc.)"
-                  required
                 />
+                {typeof formData.image === 'string' && formData.image && formData.image.startsWith('http') && (
+                  <img src={formData.image} alt="Project preview" className="mt-2 w-16 h-16 object-contain rounded" />
+                )}
               </div>
 
               <div>
